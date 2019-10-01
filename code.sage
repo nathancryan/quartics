@@ -142,6 +142,43 @@ def candidate_fields(file,deg=4):
 	   ret[dd] = temp[dd]
     return ret
 
+def candidate_fields_malle(file,deg=4):
+    r"""
+	Return a dictionary, indexed by discriminants, of number fields of a 
+        fixed degree for which there is more than one isomorphism class of 
+        number fields.  We also require that the discriminant be fundamental 
+        and relatively prime to the degree.  These files are created in MAGMA by	Malle
+
+        INPUT:
+
+        - ``file``- the path to a .sage file based on files sent to Guillermo by Malle
+        - ``deg`` - the degree of the numberfield
+
+        EXAMPLES::
+    
+        sage: fields = candidate_fields("S4fundmult_1.sage",4)
+        sage: min(fields.keys())
+        
+        sage: max(fields.keys())
+        
+        sage: len(fields.keys())
+        
+    """    
+
+    attach(file)
+    good_fields = []
+    for l in data:
+        if (gcd(l[Integer(0)],Integer(deg))==Integer(1) and is_fundamental_discriminant(l[Integer(0)]) and l[0]>0):
+            good_fields.append(l)
+    ret = {}
+    for tup in good_fields:
+     	ret[tup[0]] = []
+    for dd in good_fields:
+        dd[0],dd[1] = dd[1],dd[0]
+        ret[dd[1]].append(dd)
+    return ret
+
+
 
 PREC = 10000 # I set the precision of the q-expansion manually in case I need to compute more coefficients
 
@@ -322,3 +359,19 @@ def check_lin_ind_file(file, deg = 4):
 	if not lin_ind:
 	    print disc
 
+
+def check_lin_ind_file_malle(file, deg = 4):
+    r"""
+        Searches a list of admissible number fields and prints those discriminants for which the associated theta series are not linearly independent
+
+        See Section 5 of Barquero-Sanchez, Mantilla-Soler and Ryan
+
+    """
+
+    ff = candidate_fields_malle(file, deg)
+    for disc in ff:
+        ll = len(ff[disc])
+        forms = [compute_qf(ff[disc][i][0]).theta_series(PREC) for i in range(ll)]
+        lin_ind = check_lin_ind(forms)
+	if not lin_ind:
+	    print disc
